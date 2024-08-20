@@ -171,3 +171,27 @@ Read more about the test setup [here](/packages/arb-token-bridge-ui/tests/e2e/RE
 ---
 
 <br />
+
+### Run Bridge token
+
+1. Run register
+   ```bash
+   $ yarn register
+   ```
+
+2. Run deposit
+   ```bash
+   $ yarn deposit
+   ```
+
+3. Run withdraw
+   ```bash
+   $ yarn withdraw
+   ```
+
+4. Run claim
+   ```bash
+   $ yarn claim
+   ```
+
+<br />
