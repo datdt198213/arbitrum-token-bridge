@@ -2,7 +2,6 @@
     "name": "custom-token-bridging",
     "version": "1.0.0",
     "scripts": {
-      "build": "hardhat compile",
       "register": "ts-node scripts/register.ts",
       "deposit": "ts-node scripts/deposit.ts",
       "withdraw": "ts-node scripts/withdraw.ts",
