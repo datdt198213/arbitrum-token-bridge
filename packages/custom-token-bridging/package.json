@@ -1,0 +1,41 @@
+{
+    "name": "custom-token-bridging",
+    "version": "1.0.0",
+    "scripts": {
+      "build": "hardhat compile",
+      "register": "ts-node scripts/register.ts",
+      "deposit": "ts-node scripts/deposit.ts",
+      "withdraw": "ts-node scripts/withdraw.ts",
+      "claim": "ts-node scripts/claim.ts"
+    },
+    "devDependencies": {
+      "@openzeppelin/contracts": "^5.0.2",
+      "chai": "^4.3.4",
+      "ethers": "5.7.2",
+      "hardhat": "^2.6.6"
+    },
+    "dependencies": {
+      "@arbitrum/token-bridge-contracts": "^1.2.1",
+      "@openzeppelin/contracts": "^5.0.2",
+      "@openzeppelin/contracts-upgradeable": "^5.0.2",
+      "@stardust-gg/stardust-custodial-sdk": "2.6.1",
+      "dotenv": "^8.2.0",
+      "ethers": "5.7.2",
+      "http-status-codes": "^2.3.0",
+      "ts-node": "^10.9.2",
+      "typescript": "^5.5.3"
+    },
+    "compilerOptions": {
+        "target": "ES6",
+        "module": "commonjs",
+        "lib": ["ES6", "DOM"], 
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "outDir": "./dist"
+      },
+      "include": ["src/**/*"],
+      "exclude": ["node_modules"]
+  }
+  

@@ -1,0 +1,41 @@
+require('dotenv').config()
+
+export const customChildNetwork = {
+  chainId: 96835, // ChainID => ChainId
+  confirmPeriodBlocks: 150,
+  ethBridge: {
+    bridge: '0x1352704d09ADef775dEb94741f408953a5eBb340',
+    inbox: '0x63Cb4aa2dBcc0bd243de7f15E1476f0dCE349014',
+    outbox: '0x19400f882C323a11CeB2c042cCfb3556281A6FD1',
+    rollup: '0x7981b6217bE9a83db43ACEe10034Ab4C31408A15',
+    sequencerInbox: '0xca40282326d7BE727AB1C39D2Db0C25907523801',
+  },
+  explorerUrl: 'https://explorer-pmtest-6lw45cjbgl.t.conduit.xyz',
+  rpcURL: process.env.CHILD_RPC,
+  isTestnet: true,
+  isCustom: true,
+  name: 'conduit-orbit-deployer',
+  nativeToken: '0x0000000000000000000000000000000000000000',
+  parentChainId: 421614,
+  retryableLifetimeSeconds: 604800,
+  nitroGenesisBlock: 0,
+  nitroGenesisL1Block: 0,
+  depositTimeout: 900000,
+  tokenBridge: {
+    parentCustomGateway: '0x336038b699730778Ddd801aB6319e8500C9B88eF',
+    parentErc20Gateway: '0x1E688964B2995B18F03385645dE6b9519a8278D2',
+    parentGatewayRouter: '0x08436839AD9bd38c56efA214d78201D303100989',
+    parentMultiCall: '0xce1CAd780c529e66e3aa6D952a1ED9A6447791c1',
+    parentProxyAdmin: '0x53C943f9f9be6a86c8b8DeDC895e652B2F0E6b53',
+    parentWeth: '0x980B62Da83eFf3D4576C647993b0c1D7faf17c73',
+    parentWethGateway: '0xade65D10c6cD67f256D071541Fb76Ae4608DD9BA',
+    childCustomGateway: '0x033CA6937a6eF7145A75bFc23C1640F0c7b8a98B',
+    childErc20Gateway: '0xa2C15cA40C2Dd056d33B3D28612C1b53e706A245',
+    childGatewayRouter: '0x5224EC541a478F3da7845BF92Cce1c1fab21f3c6',
+    childMultiCall: '0x2aFF81843eB4243337a5598FaDDCedB0bAFC41F1',
+    childProxyAdmin: '0xedA3F12973F4B498Cf38a5A0055A2403450dCE33',
+    childWeth: '0xEb651B105f7fB3FfCeDBd001E4ef214e64AAa9dA',
+    childWethGateway: '0x56f1B6d1DC0878a2F7e041a1af443E963e6A861A',
+  },
+  blockTime: 0.25,
+}

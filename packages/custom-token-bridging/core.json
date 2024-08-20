@@ -1,0 +1,47 @@
+{
+  "chainInfo": {
+    "minL2BaseFee": 10000000,
+    "networkFeeReceiver": "0x252431e84d5e22435a0c833c2220770c52f59633",
+    "infrastructureFeeCollector": "0x252431e84d5e22435a0c833c2220770c52f59633",
+    "batchPoster": "0x2d9aeA9598d197ED4903372Eec4AdDa155344c16",
+    "staker": "0xcd0FF732E0695033377de2F2Aa91088679e74B4a",
+    "chainOwner": "0x800Fcf584f03cF11BcD715bA2181365e42777e33",
+    "chainName": "conduit-orbit-deployer",
+    "chainId": 96835,
+    "parentChainId": 421614,
+    "rpcUrl": "https://rpc-pmtest-6lw45cjbgl.t.conduit.xyz",
+    "explorerUrl": "https://explorer-pmtest-6lw45cjbgl.t.conduit.xyz",
+    "nativeToken": "0x0000000000000000000000000000000000000000"
+  },
+  "coreContracts": {
+    "rollup": "0x7981b6217bE9a83db43ACEe10034Ab4C31408A15",
+    "inbox": "0x63Cb4aa2dBcc0bd243de7f15E1476f0dCE349014",
+    "outbox": "0x19400f882C323a11CeB2c042cCfb3556281A6FD1",
+    "adminProxy": "0x53C943f9f9be6a86c8b8DeDC895e652B2F0E6b53",
+    "sequencerInbox": "0xca40282326d7BE727AB1C39D2Db0C25907523801",
+    "bridge": "0x1352704d09ADef775dEb94741f408953a5eBb340",
+    "utils": "0xB11EB62DD2B352886A4530A9106fE427844D515f",
+    "validatorWalletCreator": "0xEb9885B6c0e117D339F47585cC06a2765AaE2E0b",
+    "l3UpgradeExecutor": "0x014a085f3A1d2B0e6DBeb7Bf4923907992360281"
+  },
+  "tokenBridgeContracts": {
+    "l2Contracts": {
+      "customGateway": "0x336038b699730778Ddd801aB6319e8500C9B88eF",
+      "multicall": "0xce1CAd780c529e66e3aa6D952a1ED9A6447791c1",
+      "proxyAdmin": "0x53C943f9f9be6a86c8b8DeDC895e652B2F0E6b53",
+      "router": "0x08436839AD9bd38c56efA214d78201D303100989",
+      "standardGateway": "0x1E688964B2995B18F03385645dE6b9519a8278D2",
+      "weth": "0x980B62Da83eFf3D4576C647993b0c1D7faf17c73",
+      "wethGateway": "0xade65D10c6cD67f256D071541Fb76Ae4608DD9BA"
+    },
+    "l3Contracts": {
+      "customGateway": "0x033CA6937a6eF7145A75bFc23C1640F0c7b8a98B",
+      "multicall": "0x2aFF81843eB4243337a5598FaDDCedB0bAFC41F1",
+      "proxyAdmin": "0xedA3F12973F4B498Cf38a5A0055A2403450dCE33",
+      "router": "0x5224EC541a478F3da7845BF92Cce1c1fab21f3c6",
+      "standardGateway": "0xa2C15cA40C2Dd056d33B3D28612C1b53e706A245",
+      "weth": "0xEb651B105f7fB3FfCeDBd001E4ef214e64AAa9dA",
+      "wethGateway": "0x56f1B6d1DC0878a2F7e041a1af443E963e6A861A"
+    }
+  }
+}
