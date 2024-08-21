@@ -60,6 +60,14 @@ export type TransferProps = {
   overrides?: TransferOverrides
 }
 
+export type TransferFromProps = {
+    smartContractAddress: string,
+    signer: Signer,
+    from: string,
+    to: string,
+    value: BigNumber,
+}
+
 export type RequiresNativeCurrencyApprovalProps = {
   amount: BigNumber
   signer: Signer
