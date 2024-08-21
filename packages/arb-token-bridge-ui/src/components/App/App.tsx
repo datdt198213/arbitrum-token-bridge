@@ -42,6 +42,7 @@ import { HeaderConnectWalletButton } from '../common/HeaderConnectWalletButton'
 import { ProviderName, trackEvent } from '../../util/AnalyticsUtils'
 import { onDisconnectHandler } from '../../util/walletConnectUtils'
 import { addressIsSmartContract } from '../../util/AddressUtils'
+import { addConduitChain } from '../common/AddCustomChain'
 
 declare global {
   interface Window {
@@ -203,6 +204,20 @@ function AppContent() {
   const { isBlocked } = useAccountIsBlocked()
   const [tosAccepted] = useLocalStorage<boolean>(TOS_LOCALSTORAGE_KEY, false)
   const { openConnectModal } = useConnectModal()
+
+  useEffect(() => {
+    // Define an async function to call addConduitChain
+    const initializeChain = async () => {
+      try {
+        await addConduitChain();
+      } catch (error) {
+        console.error('Failed to add conduit chain:', error);
+      }
+    };
+
+    // Call the async function
+    initializeChain();
+  }, []);
 
   useEffect(() => {
     if (tosAccepted && !isConnected) {
