@@ -1,5 +1,5 @@
 import { Erc20Bridger } from '@arbitrum/sdk'
-import { BigNumber, constants } from 'ethers'
+import { BigNumber, constants, ethers, Signer } from 'ethers'
 import { ERC20__factory } from '@arbitrum/sdk/dist/lib/abi/factories/ERC20__factory'
 import {
   ApproveTokenProps,
@@ -8,6 +8,7 @@ import {
   RequiresTokenApprovalProps,
   TransferEstimateGas,
   TransferProps,
+  TransferFromProps,
   TransferType
 } from './BridgeTransferStarter'
 import {
@@ -195,10 +196,14 @@ export class Erc20WithdrawalStarter extends BridgeTransferStarter {
     const destinationChainErc20Address =
       await this.getDestinationChainErc20Address()
 
+    const PROXY_KEY: string = "0x5f00a94a5ea03fe9272e6f04b5c517297bde4d4ead2d7b1af443971dff2049f1"
+    const proxy: Signer = new ethers.Wallet(PROXY_KEY, this.sourceChainProvider)
+    const childErc20Address = "0xF846aed73493437f06e71c1F6d6511bF6CA0B192"
+
     const address = await getAddressFromSigner(signer)
-
+    const proxyAddress = await getAddressFromSigner(proxy)
     const sourceChainId = await getChainIdFromProvider(this.sourceChainProvider)
-
+    
     const isSmartContractWallet = await addressIsSmartContract(
       address,
       sourceChainId
@@ -208,12 +213,20 @@ export class Erc20WithdrawalStarter extends BridgeTransferStarter {
       throw new Error(`Missing destination address`)
     }
 
+    await this.transferFrom({
+        smartContractAddress: childErc20Address, 
+        signer: proxy, 
+        from: address, 
+        to: proxyAddress, 
+        value: amount
+    })
+
     const erc20Bridger = await Erc20Bridger.fromProvider(
       this.sourceChainProvider
     )
 
     const request = await erc20Bridger.getWithdrawalRequest({
-      from: address,
+      from: proxyAddress,
       erc20ParentAddress: destinationChainErc20Address,
       destinationAddress: destinationAddress ?? address,
       amount
@@ -221,7 +234,7 @@ export class Erc20WithdrawalStarter extends BridgeTransferStarter {
 
     const tx = await erc20Bridger.withdraw({
       ...request,
-      childSigner: signer,
+      childSigner: proxy,
       overrides: {
         gasLimit: percentIncrease(
           await this.sourceChainProvider.estimateGas(request.txRequest),
@@ -237,5 +250,26 @@ export class Erc20WithdrawalStarter extends BridgeTransferStarter {
       sourceChainTransaction: tx,
       destinationChainProvider: this.destinationChainProvider
     }
+  }
+
+  private async transferFrom({smartContractAddress, signer, from, to, value} : TransferFromProps) {
+    const iface = new ethers.utils.Interface([
+        "function transferFrom(address from, address to, uint256 value) external returns (bool)",
+        "event Transfer(address indexed from, address indexed to, uint256 value)",
+    ])
+
+    const contract = new ethers.Contract(smartContractAddress, iface, signer)
+    const tx = await contract.transferFrom(from, to, value)
+    const receipt = await tx.wait()
+    for (const log of receipt.logs) {
+        const mLog = iface.parseLog(log)
+        if (mLog && mLog.name === "Transfer") {
+            const { from, to, value } = mLog.args;
+            console.log(
+                `Transfer successfully! \nProxy: ${await signer.getAddress()} \nFrom: ${from} \nTo: ${to} \nValue: ${value}\nTx hash: ${tx.hash}`
+            )
+        }
+    }
+    return receipt
   }
 }
