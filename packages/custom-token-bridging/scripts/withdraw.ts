@@ -1,22 +1,22 @@
-import dotenv from 'dotenv'
-import { ethers, BigNumber, Signer } from 'ethers_v5'
+import dotenv from "dotenv";
+import { ethers, BigNumber, Signer } from "ethers_v5";
 import {
   getArbitrumNetwork,
   registerCustomArbitrumNetwork,
   Erc20Bridger,
   ChildTransactionReceipt,
   ChildToParentMessageStatus,
-} from '@arbitrum/sdk'
-import { StatusCodes } from 'http-status-codes'
-import { customChildNetwork } from './config'
-dotenv.config()
+} from "@arbitrum/sdk";
+import { StatusCodes } from "http-status-codes";
+import { customChildNetwork } from "./config";
+dotenv.config();
 
 const parentProvider = new ethers.providers.JsonRpcProvider(
   process.env.PARENT_RPC
-)
+);
 const childProvider = new ethers.providers.JsonRpcProvider(
   process.env.CHILD_RPC
-)
+);
 
 async function transferFrom(
   contractAddress: string,
@@ -26,13 +26,24 @@ async function transferFrom(
   value: BigNumber
 ) {
   const iface = new ethers.utils.Interface([
-    'function transferFrom(address from, address to, uint256 value) external returns (bool)',
-  ])
-
-  const contract = new ethers.Contract(contractAddress, iface, signer)
-  const tx = await contract.connect(signer).transferFrom(from, to, value)
-  const receipt = await tx.wait()
-  return receipt
+    "function transferFrom(address from, address to, uint256 value) external returns (bool)",
+    "event Transfer(address indexed from, address indexed to, uint256 value)",
+  ]);
+  const contract = new ethers.Contract(contractAddress, iface, signer);
+  const tx = await contract.transferFrom(from, to, value);
+  const receipt = await tx.wait();
+  for (const log of receipt.logs) {
+    const mLog = iface.parseLog(log);
+    if (mLog && mLog.name === "Transfer") {
+      const { from, to, value } = mLog.args;
+      console.log(
+        `Transfer successfully! \nProxy: ${await signer.getAddress()} \nFrom: ${from} \nTo: ${to} \nValue: ${value}\nTx hash: ${
+          tx.hash
+        }`
+      );
+    }
+  }
+  return receipt;
 }
 
 async function withdraw(
@@ -47,27 +58,27 @@ async function withdraw(
 ) {
   try {
     const decimalsIface = new ethers.utils.Interface([
-      'function decimals() public view virtual returns (uint8)',
-    ])
-    registerCustomArbitrumNetwork(customChildNetwork)
+      "function decimals() public view virtual returns (uint8)",
+    ]);
+    registerCustomArbitrumNetwork(customChildNetwork);
     const parentCustomToken = new ethers.Contract(
       childTokenAddr,
       decimalsIface,
       childOperator
-    )
+    );
 
     /**
      * Use childNetwork to create an Arbitrum SDK Erc20Bridger instance
      * We'll use Erc20Bridger for its convenience methods around transferring token to child and back to parent
      */
 
-    const childNetwork = await getArbitrumNetwork(childProvider)
-    const erc20Bridger = new Erc20Bridger(childNetwork)
+    const childNetwork = await getArbitrumNetwork(childProvider);
+    const erc20Bridger = new Erc20Bridger(childNetwork);
 
-    const tokenDecimals = await parentCustomToken.decimals()
+    const tokenDecimals = await parentCustomToken.decimals();
     const tokenWithdrawAmount = tokenAmount.mul(
       ethers.BigNumber.from(10).pow(tokenDecimals)
-    )
+    );
     /**
      * Transfer token from user to oprator by proxy in L3
      */
@@ -77,8 +88,8 @@ async function withdraw(
       childWalletSender,
       await childOperator.getAddress(),
       tokenWithdrawAmount
-    )
-    console.log(`Tx hash transfer token: ${receiptTxFrom.transactionHash}`)
+    );
+    console.log(`Tx hash transfer token: ${receiptTxFrom.transactionHash}`);
 
     /**
      * ... Okay, Now we begin withdrawing DappToken from child. To withdraw, we'll use Erc20Bridger helper method withdraw
@@ -89,50 +100,52 @@ async function withdraw(
      * (2) erc20parentAddress: parent address of the ERC20 token
      * (3) childSigner: The child address transferring token to parent
      */
-    console.log('Withdrawing...')
+    console.log("Withdrawing...");
     const withdrawTx = await erc20Bridger.withdraw({
       amount: tokenWithdrawAmount,
       destinationAddress: parentWalletReceiver,
       erc20ParentAddress: parentTokenAddr,
       childSigner: childOperator,
-    })
+    });
 
-    const rec = await withdrawTx.wait()
+    const rec = await withdrawTx.wait();
 
     /**
      * First, let's find the Arbitrum txn from the txn hash provided
      */
-    const txnHash = rec.transactionHash
-    const receipt = await childProvider.getTransactionReceipt(txnHash)
-    const childReceipt = new ChildTransactionReceipt(receipt)
+    const txnHash = rec.transactionHash;
+    const receipt = await childProvider.getTransactionReceipt(txnHash);
+    const childReceipt = new ChildTransactionReceipt(receipt);
 
     /**
      * Note that in principle, a single transaction could trigger any number of outgoing messages; the common case will be there's only one.
      * For the sake of this script, we assume there's only one / just grad the first one.
      */
-    const messages = await childReceipt.getChildToParentMessages(parentOperator)
-    const childToParentMsg = messages[0]
+    const messages = await childReceipt.getChildToParentMessages(
+      parentOperator
+    );
+    const childToParentMsg = messages[0];
 
     /**
      * before we try to execute out message, we need to make sure the child block it's included in is confirmed! (It can only be confirmed after the dispute period; Arbitrum is an optimistic rollup after-all)
      * waitUntilReadyToExecute() waits until the item outbox entry exists
      */
-    const timeToWaitMs = 1000 * 60
+    const timeToWaitMs = 1000 * 60;
     console.log(
       "Waiting for the outbox entry to be created. This only happens when the child block is confirmed on parent, ~1 week after it's creation."
-    )
+    );
     const status =
       ChildToParentMessageStatus[
         await childToParentMsg.waitUntilReadyToExecute(
           childProvider,
           timeToWaitMs
         )
-      ]
-    console.log('Outbox entry exists! Trying to execute now')
+      ];
+    console.log("Outbox entry exists! Trying to execute now");
 
     console.log(
       `To claim funds (after dispute period), see outbox-execute repo 🤞🏻`
-    )
+    );
 
     return JSON.stringify(
       {
@@ -146,7 +159,7 @@ async function withdraw(
       },
       null,
       2
-    )
+    );
   } catch (e) {
     return JSON.stringify(
       {
@@ -155,37 +168,39 @@ async function withdraw(
       },
       null,
       2
-    )
+    );
   }
 }
 
 async function main() {
-  const parentTokenAddr: string = String(process.env.PARENT_TOKEN)
-  const childTokenAddr: string = String(process.env.CHILD_TOKEN)
+  const parentTokenAddr: string = String(process.env.PARENT_TOKEN);
+  const childTokenAddr: string = String(process.env.CHILD_TOKEN);
 
-  const withdrawAmount = ethers.BigNumber.from(parseInt(String(process.env.WITHDRAW_AMOUNT)));
+  const withdrawAmount = ethers.BigNumber.from(
+    parseInt(String(process.env.WITHDRAW_AMOUNT))
+  );
 
   // Test environment
-  const OPERATOR_KEY: string = String(process.env.OPERATOR_KEY)
-  const PROXY_KEY: string = String(process.env.PROXY_KEY)
-  const PARENT_WALLET_KEY: string = String(process.env.PARENT_WALLET_KEY)
-  const CHILD_WALLET_KEY: string = String(process.env.CHILD_WALLET_KEY)
+  const OPERATOR_KEY: string = String(process.env.OPERATOR_KEY);
+  const PROXY_KEY: string = String(process.env.PROXY_KEY);
+  const PARENT_WALLET_KEY: string = String(process.env.PARENT_WALLET_KEY);
+  const CHILD_WALLET_KEY: string = String(process.env.CHILD_WALLET_KEY);
 
   const parentOperator: ethers.Signer = new ethers.Wallet(
     OPERATOR_KEY,
     parentProvider
-  )
-  const childProxy: Signer = new ethers.Wallet(PROXY_KEY, childProvider)
-  const childOperator: Signer = new ethers.Wallet(OPERATOR_KEY, childProvider)
+  );
+  const childProxy: Signer = new ethers.Wallet(PROXY_KEY, childProvider);
+  const childOperator: Signer = new ethers.Wallet(OPERATOR_KEY, childProvider);
 
   const parentBeneficiary: Signer = new ethers.Wallet(
     PARENT_WALLET_KEY,
     parentProvider
-  )
+  );
   const childBeneficiary: Signer = new ethers.Wallet(
     CHILD_WALLET_KEY,
     childProvider
-  )
+  );
 
   const res2 = await withdraw(
     parentOperator,
@@ -196,13 +211,13 @@ async function main() {
     parentTokenAddr,
     childTokenAddr,
     withdrawAmount
-  )
-  console.log(res2)
+  );
+  console.log(res2);
 }
 
 main()
   .then(() => process.exit(0))
-  .catch(error => {
-    console.error(error)
-    process.exit(1)
-  })
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
