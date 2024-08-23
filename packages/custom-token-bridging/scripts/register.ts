@@ -7,7 +7,7 @@ import {
   ParentToChildMessageStatus,
 } from '@arbitrum/sdk'
 import { AdminErc20Bridger } from '@arbitrum/sdk/dist/lib/assetBridger/erc20Bridger'
-import { customChildNetwork } from './config'
+import { customConduitNetwork } from './config'
 dotenv.config()
 
 const main = async () => {
@@ -24,7 +24,7 @@ const main = async () => {
 
   const parentOperator = new ethers.Wallet(OPERATOR_KEY, parentProvider)
 
-  registerCustomArbitrumNetwork(customChildNetwork)
+  registerCustomArbitrumNetwork(customConduitNetwork)
 
   /**
    * Use childNetwork to create an Arbitrum SDK AdminErc20Bridger instance
