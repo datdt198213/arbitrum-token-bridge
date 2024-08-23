@@ -1,0 +1,46 @@
+{
+    "chainInfo": {
+    "minL2BaseFee": 100000000,
+    "networkFeeReceiver": "0xc2CCcfd3215A44104D74c5188217574c92d9d745",
+    "infrastructureFeeCollector": "0xc2CCcfd3215A44104D74c5188217574c92d9d745",
+    "batchPoster": "0x290A20a7223C890FD3F5830ff1e21b3A18351D58",
+    "staker": "0x2dECa014A943CB3f3F8a86fb537deA7f229A76C8",
+    "chainOwner": "0xc2CCcfd3215A44104D74c5188217574c92d9d745",
+    "chainName": "ANLAB Custom 2",
+    "chainId": 54089016069,
+    "parentChainId": 421614,
+    "rpcUrl": "http://18.119.5.142:8449",
+    "explorerUrl": "http://localhost",
+    "nativeToken": "0x19521EF758A5C25a80C9D1e284DE0d25CcCf71B8"
+  },
+  "coreContracts": {
+    "rollup": "0xaC775731Af635a1452477B30b16a9Ef40fe93064",
+    "inbox": "0xb536f11c9030345F85e16E1A929DA62694f70978",
+    "outbox": "0xFcc36867a2f0139258A6Bf314D78aE7172272119",
+    "adminProxy": "0xe146B496B626853012F102afF8d69aEf3396B3fA",
+    "sequencerInbox": "0xA70dbE96A9B05B499a645349a972916B745d9aC6",
+    "bridge": "0xBF249dF3A88461b9926c3D1A416A51355D2a6b89",
+    "utils": "0x7C100c97a54e2D309a194752Df2f66922A802be3",
+    "validatorWalletCreator": "0xFAd2C6Cb969Ab7B18d78BD63e512b650bb70B570"
+  },
+  "tokenBridgeContracts": {
+    "l2Contracts": {
+      "customGateway": "0xF99a637842E0282002399fD9f2024d485B170850",
+      "multicall": "0xce1CAd780c529e66e3aa6D952a1ED9A6447791c1",
+      "proxyAdmin": "0x0000000000000000000000000000000000000000",
+      "router": "0x02C5F9592E8873e160c98C01689F33D1F4347592",
+      "standardGateway": "0x53e73e15e87C20360d215d0b7c4FE8f32826D9D2",
+      "weth": "0x0000000000000000000000000000000000000000",
+      "wethGateway": "0x0000000000000000000000000000000000000000"
+    },
+    "l3Contracts": {
+      "customGateway": "0x0778Ff3f63bd242938Ea111f047aD1D1bDdBAD4F",
+      "multicall": "0xdE0a4B832f6fC10758D2AA12C01af9C2b9fb7969",
+      "proxyAdmin": "0x4CCF5971da0aFA26AAc36cc31B9B968eBa4707Ff",
+      "router": "0xE202Dd15c0C1484031b212c8c45bC7B2C9ef8679",
+      "standardGateway": "0xBAC3383350F5D489bEC1b599575F93CcB2954ECB",
+      "weth": "0x0000000000000000000000000000000000000000",
+      "wethGateway": "0x0000000000000000000000000000000000000000"
+    }
+  }
+}

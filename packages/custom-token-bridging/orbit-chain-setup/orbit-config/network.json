@@ -1,0 +1,51 @@
+{
+  "l1Network": {
+    "blockTime": 10,
+    "chainID": 421614,
+    "explorerUrl": "",
+    "isCustom": true,
+    "name": "unknown",
+    "partnerChainIDs": [
+      54089016069
+    ],
+    "isArbitrum": false
+  },
+  "l2Network": {
+    "chainID": 54089016069,
+    "confirmPeriodBlocks": 150,
+    "ethBridge": {
+      "bridge": "0xBF249dF3A88461b9926c3D1A416A51355D2a6b89",
+      "inbox": "0xb536f11c9030345F85e16E1A929DA62694f70978",
+      "outbox": "0xFcc36867a2f0139258A6Bf314D78aE7172272119",
+      "rollup": "0xaC775731Af635a1452477B30b16a9Ef40fe93064",
+      "sequencerInbox": "0xA70dbE96A9B05B499a645349a972916B745d9aC6"
+    },
+    "explorerUrl": "",
+    "isArbitrum": true,
+    "isCustom": true,
+    "name": "ANLAB Custom 2",
+    "partnerChainID": 421614,
+    "partnerChainIDs": [],
+    "retryableLifetimeSeconds": 604800,
+    "nitroGenesisBlock": 0,
+    "nitroGenesisL1Block": 0,
+    "depositTimeout": 900000,
+    "tokenBridge": {
+      "l1CustomGateway": "0xF99a637842E0282002399fD9f2024d485B170850",
+      "l1ERC20Gateway": "0x53e73e15e87C20360d215d0b7c4FE8f32826D9D2",
+      "l1GatewayRouter": "0x02C5F9592E8873e160c98C01689F33D1F4347592",
+      "l1MultiCall": "0xce1CAd780c529e66e3aa6D952a1ED9A6447791c1",
+      "l1ProxyAdmin": "0x0000000000000000000000000000000000000000",
+      "l1Weth": "0x0000000000000000000000000000000000000000",
+      "l1WethGateway": "0x0000000000000000000000000000000000000000",
+      "l2CustomGateway": "0x0778Ff3f63bd242938Ea111f047aD1D1bDdBAD4F",
+      "l2ERC20Gateway": "0xBAC3383350F5D489bEC1b599575F93CcB2954ECB",
+      "l2GatewayRouter": "0xE202Dd15c0C1484031b212c8c45bC7B2C9ef8679",
+      "l2Multicall": "0xdE0a4B832f6fC10758D2AA12C01af9C2b9fb7969",
+      "l2ProxyAdmin": "0x4CCF5971da0aFA26AAc36cc31B9B968eBa4707Ff",
+      "l2Weth": "0x0000000000000000000000000000000000000000",
+      "l2WethGateway": "0x0000000000000000000000000000000000000000"
+    },
+    "blockTime": 0.25
+  }
+}
