@@ -46,6 +46,10 @@ yarn withdraw
 yarn claim
 ```
 
+```
+yarn serve
+```
+
 <!-- <p align="left">
   <img width="350" height="150" src= "../../assets/logo.svg" />
 </p> -->
