@@ -12,6 +12,7 @@ import { customConduitNetwork, customChildNetwork } from "@/config/network.confi
 import { StatusCodes } from "http-status-codes";
 import { Logger } from "./logger.lib";
 
+const parentTokenAddr: string = String(process.env.PARENT_TOKEN)
 const CHILD_RPC: string = String(process.env.CHILD_RPC);
 const childProvider = new ethers.providers.JsonRpcProvider(CHILD_RPC);
 
@@ -20,7 +21,6 @@ export async function register() {}
 export async function deposit(
   parentWallet: Signer,
   tokenAmount: BigNumber,
-  parentTokenAddr: string,
   beneficiary: string
 ) {
   // var status
@@ -87,7 +87,7 @@ export async function deposit(
         break;
     }
     }
-    if (parseLogError != undefined) {
+    if (parseLogError !== undefined) {
       throw new Error(
         `Transaction Approve() was sent to chain with hash ${txHashApprove} but got error when getting log event: ${parseLogError}`
       );
@@ -115,9 +115,7 @@ export async function deposit(
     /**
      * Now we wait for parent and child side of transactions to be confirmed
      */
-    // console.log(
-    //   `Deposit initiated: waiting for child network retryable (takes 10-15 minutes;current time: ${new Date().toTimeString()}) `
-    // );
+
     Logger.getInstance().info(`Deposit initiated: waiting for child network retryable (takes 10-15 minutes; current time: ${new Date().toTimeString()})`)
     const depositRec = await depositTx.wait();
     const childResult = await depositRec.waitForChildTransactionReceipt(
