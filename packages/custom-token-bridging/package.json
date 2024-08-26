@@ -10,7 +10,8 @@
     "start": "ts-node -r tsconfig-paths/register index.ts",
     "lint": "eslint . --ext .ts",
     "lint-fix": "eslint . --ext .ts --fix",
-    "build": "webpack"
+    "build": "webpack",
+    "serve": "nodemon"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^5.0.2",
