@@ -24,12 +24,6 @@ class BridgeRoute {
 
     private routes(): void {
         const controller = new BridgeController();
-
-        // this.express.get("/get", (req, res) => {
-        //     controller.getToken(req, res).catch((err) => {
-        //         Logger.getInstance().error(err);
-        //     });
-        // });
         this.express.post("/deposit", async (req, res) => {
             controller.deposit(req, res).catch((err) => {
                 Logger.getInstance().error(err);
@@ -41,7 +35,7 @@ class BridgeRoute {
             });
         });
         this.express.post("/claim", async (req, res) => {
-            controller.withdraw(req, res).catch((err) => {
+            controller.claim(req, res).catch((err) => {
                 Logger.getInstance().error(err);
             });
         });
