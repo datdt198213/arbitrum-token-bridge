@@ -23,18 +23,30 @@ const provider = new ethers.providers.JsonRpcProvider(String(process.env.PARENT_
 const options = { method: "GET", headers: { "x-api-key": STARDUST_API_KEY } };
 
 async function getWalletFromProfileID(profileID: string) {
-    const profile = await sdk.getProfile(profileID);
-    // console.log(profile)
-    const { wallet } = profile;
-    const walletID = wallet.evm.walletId;
-
-    const res = await fetch(
-        `https://vault-api.stardust.gg/v1/wallet/${walletID}?includeAddresses=evm`,
-        options
-    );
-    var resultTmp = await res.json();
-    const walletAddress = resultTmp.addresses.evm;
-    return {wallet, walletAddress};
+    try {
+        const profile = await sdk.getProfile(profileID);
+    
+        const { wallet } = profile;
+        const walletID = wallet.evm.walletId;
+    
+        const res = await fetch(
+            `https://vault-api.stardust.gg/v1/wallet/${walletID}?includeAddresses=evm`,
+            options
+        );
+    
+        if (!res.ok) {
+            throw new Error(`Failed to fetch wallet data: ${res.status} ${res.statusText}`);
+        }
+    
+        const resultTmp = await res.json();
+        const walletAddress = resultTmp.addresses.evm;
+    
+        return { wallet, walletAddress };
+    } catch (err: any) {
+        console.error(`Error occurred: ${err.message}`);
+        throw new Error(`Unable to retrieve wallet and address information: ${err.message}`);
+    }
+    
 }
 
 async function getSignerFromCustodialWallet(wallet: StardustWallet) {
@@ -64,6 +76,7 @@ export class BridgeController implements IController {
     }
 
     // Get Token (s)
+    /*
     public async getToken(req: Request, res: Response) {
         Logger.getInstance().info(
             `GET Token  - Accept request from ${req.get("User-Agent")} - ${
@@ -85,6 +98,7 @@ export class BridgeController implements IController {
             );
         }
     }
+    */
 
     public async deposit(req: Request, res: Response) {
         Logger.getInstance().info(
@@ -113,29 +127,38 @@ export class BridgeController implements IController {
                 throw new Error(message_error);
             }
 
-            const custodialProfileId = req.body.custodialProfileId;
             const tokenAmount = req.body.tokenAmount;
-            const parentTokenAddr = req.body.parentTokenAddr;
-            const l3Wallet = req.body.l3Wallet;
-            const {wallet, walletAddress} = await getWalletFromProfileID(custodialProfileId);
-            const l2Signer = await getSignerFromCustodialWallet(wallet);
-            const timeDeposit = Date.now();
-            // console.log(await signer.getAddress(), tokenAmount, parentTokenAddr, l3Wallet);
-            let [resultDeposit, message]: any = await deposit(l2Signer, tokenAmount, parentTokenAddr, l3Wallet)
-            const timeFinishDeposit = Date.now() - timeDeposit;
-            console.log(`Time deposit on BlockChain: ${timeFinishDeposit}`);
 
-            if (resultDeposit) {
-                Logger.getInstance().info(
-                    `The transaction hash success is: ${message}`
-                );
-                res.status(HttpStatus.OK).send(
-                    `The transaction hash success is: ${message}`
-                );
+            if (req.body.custodialProfileId !== undefined) {
+                const custodialProfileId = req.body.custodialProfileId;
+                const {wallet, walletAddress} = await getWalletFromProfileID(custodialProfileId);
+                const l2Signer = await getSignerFromCustodialWallet(wallet);
+
+                const destinationAddress = req.body.l3Wallet !== undefined ? req.body.l3Wallet : walletAddress;
+                
+                const timeDeposit = Date.now();
+                let [resultDeposit, message]: any = await deposit(l2Signer, tokenAmount, destinationAddress);
+                const timeFinishDeposit = Date.now() - timeDeposit;
+                Logger.getInstance().info(`Time deposit on BlockChain: ${timeFinishDeposit}`);
+                
+                if (resultDeposit) {
+                    Logger.getInstance().info(
+                        `The transaction hash success is: ${message}`
+                    );
+                    res.status(HttpStatus.OK).send(
+                        `The transaction hash success is: ${message}`
+                    );
+                } else {
+                    status_error = HttpStatus.INTERNAL_SERVER_ERROR;
+                    message_error = message;
+                    throw new Error(message_error);
+                }
+
+            } else if (req.body.coinbaseWallet !== undefined) {
+                
             } else {
-                status_error = HttpStatus.INTERNAL_SERVER_ERROR;
-                message_error = message;
-                throw new Error(message_error);
+                message_error = "Unable to get an l2 wallet to deposit funds";
+                throw new Error (message_error);
             }
         } catch (err) {
             Logger.getInstance().error(
@@ -146,91 +169,5 @@ export class BridgeController implements IController {
             res.status(status_error).send(getErrorMessage(err));
         }
     }
-
-    // Create collection using ProfileID
-    /*
-    public async createCollection(req: Request, res: Response) {
-        Logger.getInstance().info(
-            `Create Collection using ProfileID - Accept request from ${req.get(
-                "User-Agent"
-            )} - ${req.ip}`
-        );
-        Logger.getInstance().info(
-            `Create Collection using ProfileID - Request with body ${JSON.stringify(
-                req.body
-            )}`
-        );
-
-        var status_error = HttpStatus.INTERNAL_SERVER_ERROR;
-        var message_error;
-        try {
-            if (
-                req.body.constructor === Object &&
-                Object.keys(req.body).length === 0
-            ) {
-                status_error = HttpStatus.BAD_REQUEST;
-                message_error = JSON.stringify(
-                    { message: "Invalid request body" },
-                    null,
-                    2
-                );
-                throw new Error(message_error);
-            }
-
-            const name = req.body.name;
-            const symbol = req.body.symbol;
-            const dataPath = req.body.dataPath;
-            const adminProfile = req.body.admin;
-            const adminWallet = await getWalletFromProfileID(adminProfile);
-
-            // Select operator
-            var operator_tmp: Operator = await selectOperator();
-            let operatorId_tmp = `operator-${operator_tmp.address}`;
-            let queue = operatorQueues[operatorId_tmp];
-            Logger.getInstance().info(`operator_tmp ${operator_tmp.address}`);
-
-            const timeLock = Date.now();
-            let [resultLock, message]: any = await createCollection(
-                name,
-                symbol,
-                dataPath,
-                adminWallet,
-                operator_tmp.address,
-                operator_tmp.privateKey,
-                queue
-            );
-            const timeFinishLock = Date.now() - timeLock;
-            console.log(`Time Lock on BlockChain: ${timeFinishLock}`);
-
-            if (resultLock) {
-                Logger.getInstance().info(
-                    `The transaction hash success is: ${message}`
-                );
-                res.status(HttpStatus.OK).send(
-                    `The transaction hash success is: ${message}`
-                );
-            } else {
-                status_error = HttpStatus.INTERNAL_SERVER_ERROR;
-                message_error = JSON.stringify(
-                    {
-                        message: `ERROR when CREATE COLLECTION ${name} with reason ${message} `,
-                    },
-                    null,
-                    2
-                );
-                throw new Error(message_error);
-            }
-        } catch (err) {
-            Logger.getInstance().error(
-                `Create collection token using ProfileID error: ${getErrorMessage(
-                    err
-                )}`
-            );
-            console.log(err);
-            res.status(status_error).send(getErrorMessage(err));
-        }
-    }
-    */
-
 
 }
