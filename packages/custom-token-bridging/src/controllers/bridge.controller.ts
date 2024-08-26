@@ -9,7 +9,7 @@ import { Logger } from "@/lib/logger.lib";
 import { IController } from "./interface.controller";
 
 import {
-    deposit, withdraw
+    deposit, withdraw, claim
 } from "@/lib/bridge";
 import { StardustCustodialSDK, StardustWallet } from "@stardust-gg/stardust-custodial-sdk";
 import { Operator, listOperators } from "@/lib/operators";
@@ -107,7 +107,7 @@ export class BridgeController implements IController {
             }`
         );
         Logger.getInstance().info(
-            `Depost Token  - Request with params ${JSON.stringify(req.query)}`
+            `DEPOSIT Token  - Request with params ${JSON.stringify(req.query)}`
         );
         
         var status_error = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -143,10 +143,10 @@ export class BridgeController implements IController {
                 
                 if (resultDeposit) {
                     Logger.getInstance().info(
-                        `The transaction hash success is: ${message}`
+                        `Deposit object: ${message}`
                     );
                     res.status(HttpStatus.OK).send(
-                        `The transaction hash success is: ${message}`
+                        `Deposit object: ${message}`
                     );
                 } else {
                     status_error = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -155,7 +155,7 @@ export class BridgeController implements IController {
                 }
 
             } else if (req.body.coinbaseWallet !== undefined) {
-                
+
             } else {
                 message_error = "Unable to get an l2 wallet to deposit funds";
                 throw new Error (message_error);
@@ -163,6 +163,145 @@ export class BridgeController implements IController {
         } catch (err) {
             Logger.getInstance().error(
                 `Deposit token error: ${getErrorMessage(
+                    err
+                )}`
+            );
+            res.status(status_error).send(getErrorMessage(err));
+        }
+    }
+
+    public async withdraw(req: Request, res: Response) {
+        Logger.getInstance().info(
+            `WITHDRAW Token  - Accept request from ${req.get("User-Agent")} - ${
+                req.ip
+            }`
+        );
+        Logger.getInstance().info(
+            `WITHDRAW Token  - Request with params ${JSON.stringify(req.query)}`
+        );
+        
+        var status_error = HttpStatus.INTERNAL_SERVER_ERROR;
+        var message_error;
+
+        try {
+            if (
+                req.body.constructor === Object &&
+                Object.keys(req.body).length === 0
+            ) {
+                status_error = HttpStatus.BAD_REQUEST;
+                message_error = JSON.stringify(
+                    { message: "Invalid request body" },
+                    null,
+                    2
+                );
+                throw new Error(message_error);
+            }
+
+            const tokenAmount = req.body.tokenAmount;
+
+            if (req.body.custodialProfileId !== undefined) {
+                const custodialProfileId = req.body.custodialProfileId;
+                const {wallet, walletAddress} = await getWalletFromProfileID(custodialProfileId);
+                const l2Signer = await getSignerFromCustodialWallet(wallet);
+
+                const destinationAddress = req.body.l3Wallet !== undefined ? req.body.l3Wallet : walletAddress;
+                
+                const timeWithdraw = Date.now();
+                let [resultWithdraw, message]: any = await withdraw(l2Signer, walletAddress, destinationAddress, tokenAmount);
+                const timeFinishWithdraw = Date.now() - timeWithdraw;
+                Logger.getInstance().info(`Time withdraw on BlockChain: ${timeFinishWithdraw}`);
+                
+                if (resultWithdraw) {
+                    Logger.getInstance().info(
+                        `Withdraw object: ${message}`
+                    );
+                    res.status(HttpStatus.OK).send(
+                        `Withdraw object: ${message}`
+                    );
+                } else {
+                    status_error = HttpStatus.INTERNAL_SERVER_ERROR;
+                    message_error = message;
+                    throw new Error(message_error);
+                }
+
+            } else if (req.body.coinbaseWallet !== undefined) {
+
+            } else {
+                message_error = "Unable to get an l2 wallet to withdraw funds";
+                throw new Error (message_error);
+            }
+        } catch (err) {
+            Logger.getInstance().error(
+                `Withdraw token error: ${getErrorMessage(
+                    err
+                )}`
+            );
+            res.status(status_error).send(getErrorMessage(err));
+        }
+    }
+
+    public async claim(req: Request, res: Response) {
+        Logger.getInstance().info(
+            `CLAIM Token  - Accept request from ${req.get("User-Agent")} - ${
+                req.ip
+            }`
+        );
+        Logger.getInstance().info(
+            `CLAIM Token  - Request with params ${JSON.stringify(req.query)}`
+        );
+
+        var status_error = HttpStatus.INTERNAL_SERVER_ERROR;
+        var message_error;
+
+        try {
+            if (
+                req.body.constructor === Object &&
+                Object.keys(req.body).length === 0
+            ) {
+                status_error = HttpStatus.BAD_REQUEST;
+                message_error = JSON.stringify(
+                    { message: "Invalid request body" },
+                    null,
+                    2
+                );
+                throw new Error(message_error);
+            }
+
+            if (req.body.custodialProfileId !== undefined) {
+                const custodialProfileId = req.body.custodialProfileId;
+                const {wallet, walletAddress} = await getWalletFromProfileID(custodialProfileId);
+                const l2Signer = await getSignerFromCustodialWallet(wallet);
+
+                const txHash = req.body.txHash;
+                
+                const timeClaim = Date.now();
+                let [resultClaim, message]: any = await claim(txHash, l2Signer);
+                const timeFinishClaim = Date.now() - timeClaim;
+                Logger.getInstance().info(`Time claim on BlockChain: ${timeFinishClaim}`);
+                
+                if (resultClaim) {
+                    Logger.getInstance().info(
+                        `Claim object ${message}`
+                    );
+                    res.status(HttpStatus.OK).send(
+                        `Claim object ${message}`
+                    );
+                } else {
+                    status_error = HttpStatus.INTERNAL_SERVER_ERROR;
+                    message_error = message;
+                    throw new Error(message_error);
+                }
+
+            } else if (req.body.coinbaseWallet !== undefined) {
+
+            } else {
+                message_error = "Unable to get an l2 wallet to claim";
+                throw new Error (message_error);
+            }
+
+        } catch (err) {
+            Logger.getInstance().error(
+                `Withdraw token error: ${getErrorMessage(
                     err
                 )}`
             );
