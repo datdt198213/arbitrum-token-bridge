@@ -45,6 +45,7 @@ export async function deposit(
 ): Promise<[boolean, string]> {
   // var status
   try {
+
     const balanceERC20 = await balanceOfERC20(
       parentTokenAddr,
       await parentWallet.getAddress(),
@@ -175,7 +176,7 @@ export async function deposit(
             txHash: txHashDeposit,
             parentWallet: await parentWallet.getAddress(),
             childWallet: beneficiary,
-            amount: tokenDepositAmount,
+            amount: ethers.utils.formatUnits(tokenDepositAmount, tokenDecimals),
             statusCode: StatusCodes.OK,
           },
           null,
@@ -345,7 +346,7 @@ export async function withdraw(
           childSigner: await childOperator.getAddress(),
           from: childWalletSender,
           to: parentWalletReceiver,
-          amount: tokenWithdrawAmount,
+          amount: ethers.utils.formatUnits(tokenWithdrawAmount, tokenDecimals),
           status: status,
           statusCode: StatusCodes.OK,
         },
