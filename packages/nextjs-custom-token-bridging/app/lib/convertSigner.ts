@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { Account, Chain, Client, Transport } from 'viem'
 import { Config, useConnectorClient } from 'wagmi'
+import { providers } from 'ethers';
 
 export function clientToSigner(client: Client<Transport, Chain, Account>) {
     const { account, chain, transport } = client 
