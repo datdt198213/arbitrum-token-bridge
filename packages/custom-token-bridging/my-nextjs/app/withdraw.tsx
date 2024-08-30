@@ -1,8 +1,8 @@
 "use client";
 
 import { BigNumber } from "ethers";
-import { withdraw } from "@/token-bridge-sdk/withdraw";
-import { useEthersSigner } from "@/token-bridge-sdk/utils";
+import { withdraw } from "@/token-bridge/withdraw";
+import { useEthersSigner } from "@/utils/convertSigner";
 import { useEffect, useState } from "react";
 
 export function Withdraw() {

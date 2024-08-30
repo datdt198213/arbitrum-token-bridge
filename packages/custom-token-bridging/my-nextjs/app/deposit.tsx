@@ -1,8 +1,8 @@
 "use client";
 
 import { BigNumber } from "ethers";
-import { deposit } from "@/token-bridge-sdk/deposit";
-import { useEthersSigner } from "@/token-bridge-sdk/utils";
+import { deposit } from "@/token-bridge/deposit";
+import { useEthersSigner } from "@/utils/convertSigner";
 import { useEffect, useState } from "react";
 
 export function Deposit() {
