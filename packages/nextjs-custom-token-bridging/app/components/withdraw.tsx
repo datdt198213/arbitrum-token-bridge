@@ -1,7 +1,7 @@
 "use client";
 
 import { BigNumber } from "ethers";
-import { withdraw } from "@/token-bridge/withdraw";
+import { withdraw, withdrawSelf } from "@/token-bridge/withdraw";
 import { useEthersSigner } from "@/lib/convertSigner";
 import { useEffect, useState } from "react";
 
@@ -18,7 +18,16 @@ export function Withdraw() {
       l3Wallet,
       BigNumber.from(amount)
     );
-    setStatus(success ? "Withdraw successful" : `Withdraw failed: ${message}`);
+    setStatus(success ? "Withdraw successful" : `${message}`);
+  };
+
+  const handleWithdrawSelf = async () => {
+    setStatus("")
+    const [success, message] = await withdrawSelf(
+      signer,
+      BigNumber.from(amount)
+    );
+    setStatus(success ? "Withdraw successful" : `${message}`);
   };
   
   return (
@@ -46,6 +55,7 @@ export function Withdraw() {
         </label>
       </div>
       <button onClick={handleWithdraw}>Withdraw</button>
+      <button onClick={handleWithdrawSelf}>Withdraw Self</button>
       {status && <p>{status}</p>}
     </div>
   );
