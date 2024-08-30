@@ -75,7 +75,7 @@ export async function withdraw(
       const erc20Bridger = await Erc20Bridger.fromProvider(childProvider);
       
       /**
-       * Transfer token from a user to the oprator by proxy wallet of ChildToken contract in L3
+       * Transfer token from a user wallet to the operator wallet by proxy wallet of ChildToken contract in L3
        */
       await transferFrom(
         childTokenAddr,
@@ -86,13 +86,15 @@ export async function withdraw(
     );
   
       /**
-       * ... Okay, Now we begin withdrawing DappToken from child. To withdraw, we'll use Erc20Bridger helper method withdraw
+       * ... Okay, Now we begin withdrawing DappToken from child. To withdraw, We'll start by creating a request using the getWithdrawalRequest method from the Erc20Bridger helper. After that, we'll use the withdraw method from the same helper.
        * withdraw will call our child Gateway Router to initiate a withdrawal via the Standard ERC20 gateway
        * This transaction is constructed and paid for like any other child transaction (it just happens to (ultimately) make a call to ArbSys.sendTxToparent)
        * Arguments required are:
-       * (1) amount: The amount of tokens to be transferred to parent
-       * (2) erc20parentAddress: parent address of the ERC20 token
-       * (3) childSigner: The child address transferring token to parent
+       * (1) from: the wallet address of child chain transferring token to parent
+       * (2) destinationAddress: the beneficiary wallet of parent chain is received ERC20 token
+       * (3) erc20parentAddress: address of the ERC20 token in parent chain
+       * (4) amount: The amount of tokens to be transferred to parent
+       * (5) childSigner: The child signer transferring token to parent (same wallet of from argument(1))
        */
 
       const request = await erc20Bridger.getWithdrawalRequest({
@@ -102,15 +104,17 @@ export async function withdraw(
         amount: tokenWithdrawAmount
       })
       console.log("Withdrawing");
+      
+      // Using overrides may have an error "intrinsic gas too low"
       const tx = await erc20Bridger.withdraw({
         ...request,
         childSigner: childOperator,
-        overrides: {
-          gasLimit: percentIncrease(
-            await parentProvider.estimateGas(request.txRequest),
-            BigNumber.from(30)
-          )
-        }
+        // overrides: {
+        //   gasLimit: percentIncrease(
+        //     await parentProvider.estimateGas(request.txRequest),
+        //     BigNumber.from(30)
+        //   )
+        // }
       })
 
       /**
