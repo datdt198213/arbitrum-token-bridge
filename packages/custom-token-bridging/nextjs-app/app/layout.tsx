@@ -1,7 +1,7 @@
 import "@rainbow-me/rainbowkit/styles.css";
-import { Providers } from "./providers";
-import { Deposit } from "./deposit";
-import { Withdraw } from "./withdraw";
+import { Providers } from "./components/providers";
+import { Deposit } from "./components/deposit";
+import { Withdraw } from "./components/withdraw";
 
 function RootLayout({ children }: { children: React.ReactNode }) {
   return (
