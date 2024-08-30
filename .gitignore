@@ -16,3 +16,9 @@ packages/*/build/
 packages/*/node_modules/
 packages/*/.env
 yarn-error.log
+
+packages/*/operators.json
+packages/*/coinbase_api_key.json
+packages/*/.next
+
+logs
