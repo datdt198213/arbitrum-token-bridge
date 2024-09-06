@@ -1,81 +1,49 @@
 import { Provider } from "@ethersproject/providers";
-import { Signer, BigNumber, Contract, ethers } from "ethers";
+import { Signer, BigNumber, ethers } from "ethers";
 import {
-  getArbitrumNetwork,
   registerCustomArbitrumNetwork,
   ParentToChildMessageStatus,
-  Erc20Bridger,
+  EthBridger
 } from "@arbitrum/sdk";
-import { percentIncrease } from "@/token-bridge/utils";
-import { customConduitNetwork } from "@/config/network";
-import { balanceOfERC20 } from "@/token-bridge/utils";
+import { approve, checkBalanceERC20, getDecimals, percentIncrease } from "@/lib/utils";
 
-// const parentTokenAddr: string = String(process.env.PARENT_TOKEN);
-// const childTokenAddr: string = String(process.env.CHILD_TOKEN);
-// const CHILD_RPC: string = String(process.env.CHILD_RPC);
-// const PARENT_RPC: string = String(process.env.PARENT_RPC);
-// const childProvider = new ethers.providers.JsonRpcProvider(CHILD_RPC);
-// const parentProvider = new ethers.providers.JsonRpcProvider(PARENT_RPC);
-// const OPERATOR_KEY: string = String(process.env.OPERATOR_KEY);
-// const PROXY_KEY: string = String(process.env.PROXY_KEY);
-
-const parentTokenAddr: string = "0xe7eEB65afd58e465Fc4986C8f71a5670381525Ad";
-const childTokenAddr: string = "0x4ae4a5b28fF12274727a1798a3BCDd493A19287C";
-const CHILD_RPC: string = "https://rpc-pmtest-6lw45cjbgl.t.conduit.xyz";
-const PARENT_RPC: string = "https://sepolia-rollup.arbitrum.io/rpc";
-const childProvider = new ethers.providers.JsonRpcProvider(CHILD_RPC);
-const parentProvider = new ethers.providers.JsonRpcProvider(PARENT_RPC);
-const OPERATOR_KEY: string =
-  "0xf70920bc474b73aa90bff0d7ac295cd840b72375aeea12b20ff88460dac80f53";
-const PROXY_KEY: string =
-  "0x99b0eb9ce810284e3b7269b2f5fb16679d2062a931a791c191f4035e3f807cd2";
+import { parentTokenAddr, childNetwork } from "@/lib/utils";
+import { childProvider, parentProvider } from "@/lib/utils";
 
 export async function deposit(
-  parentWallet: Signer,
-  tokenAmount: BigNumber,
+  parentSigner: Signer,
+  amount: string,
   beneficiary: string
 ): Promise<[boolean, string]> {
   // var status
   try {
-    const balanceERC20 = await balanceOfERC20(
-      parentTokenAddr,
-      await parentWallet.getAddress(),
-      parentProvider
-    );
-    registerCustomArbitrumNetwork(customConduitNetwork);
+    const parentWallet: string = await parentSigner.getAddress();
+    registerCustomArbitrumNetwork(childNetwork);
 
     /**
-     * Use arbitrumNetwork to create an Arbitrum SDK Erc20Bridger instance
+     * Use childProvider to get an Arbitrum SDK Erc20Bridger instance
      * We'll use Erc20Bridger for its convenience methods around transferring token to child
      */
-    const arbitrumNetwork = await getArbitrumNetwork(childProvider);
-    const erc20Bridger = new Erc20Bridger(arbitrumNetwork);
-
+    const ethBridger = await EthBridger.fromProvider(childProvider);
+    
     /**
      * Because the token might have decimals, we update the amount to deposit taking into account those decimals
      */
-    const decimalsIface = new ethers.utils.Interface([
-      "function decimals() public view virtual returns (uint8)",
-    ]);
-    const parentCustomToken = new ethers.Contract(
-      parentTokenAddr,
-      decimalsIface,
-      parentWallet
-    );
-    const tokenDecimals = await parentCustomToken.decimals();
-    const tokenDepositAmount = tokenAmount.mul(
-      ethers.BigNumber.from(10).pow(tokenDecimals)
-    );
-
-    if (tokenDepositAmount.gt(balanceERC20)) {
-      throw new Error(
-        `Insufficient Balance ${ethers.utils.formatUnits(
-          tokenDepositAmount
-        )} > ${ethers.utils.formatUnits(
-          balanceERC20
-        )}`
+    const tokenDepositAmount = await getDecimals(
+        parentTokenAddr,
+        parentProvider,
+        amount
       );
-    }
+    
+    /**
+     * Check balance of wallet in L2
+     */
+        await checkBalanceERC20(
+            parentTokenAddr,
+            parentWallet,
+            parentProvider,
+            tokenDepositAmount
+          );
 
     const evtApprovalABI = [
       "event Approval(address indexed owner, address indexed spender, uint256 value)",
@@ -89,36 +57,13 @@ export async function deposit(
      * (1) parentSigner: The parent address transferring token to child
      * (2) erc20parentAddress: parent address of the ERC20 token to be depositted to child
      */
-
-    const approveTx = await erc20Bridger.approveToken({
-      parentSigner: parentWallet,
-      erc20ParentAddress: parentTokenAddr,
-    });
-    const approveRec = await approveTx.wait();
-    var parseLogError,
-      txHashDeposit: string = "",
-      txHashApprove: string = "";
-
-    for (const log of approveRec.logs) {
-      try {
-        const mLog = evtApprovalIF.parseLog({
-          topics: log.topics,
-          data: log.data,
-        });
-        if (mLog && mLog.name === "Approval") {
-          txHashApprove = approveTx.hash;
-          console.log(`Approve successfully! Tx approve ${txHashApprove}`);
-        }
-      } catch (e) {
-        parseLogError = e;
-        break;
-      }
-    }
-    if (parseLogError !== undefined) {
-      throw new Error(
-        `Transaction Approve() was sent to chain with hash ${txHashApprove} but got error when getting log event: ${parseLogError}`
-      );
-    }
+    const inbox = childNetwork.ethBridge.inbox;
+    const approval = await approve(parentTokenAddr, parentSigner, inbox, tokenDepositAmount);
+    // const approveTx = await erc20Bridger.approveToken({
+    //   parentSigner: parentSigner,
+    //   erc20ParentAddress: parentTokenAddr,
+    // });
+    var txHashDeposit: string = "";
 
     /**
      * Deposit DappToken to child using erc20Bridger. This will escrow funds in the Gateway contract on parent, and send a message to mint tokens on child.
@@ -131,28 +76,44 @@ export async function deposit(
      * (3) childProvider: An child provider
      */
 
-    const depositRequest = await erc20Bridger.getDepositRequest({
-      parentProvider: parentProvider,
-      childProvider: childProvider,
-      from: await parentWallet.getAddress(),
-      erc20ParentAddress: parentTokenAddr,
-      destinationAddress: beneficiary,
-      amount: tokenDepositAmount,
-      retryableGasOverrides: {
-        // the gas limit may vary by about 20k due to SSTORE (zero vs nonzero)
-        // the 30% gas limit increase should cover the difference
-        gasLimit: { percentIncrease: BigNumber.from(30) },
-      },
-    });
 
-    const gasLimit = await parentProvider.estimateGas(depositRequest.txRequest);
+    const depositRequest = await ethBridger.getDepositRequest({
+        amount: tokenDepositAmount,
+        from: parentWallet
+      })
+  
+      const gasLimit = await parentProvider.estimateGas(
+        depositRequest.txRequest
+      )
+  
+      const sourceChainTransaction = await ethBridger.deposit({
+        amount: tokenDepositAmount,
+        parentSigner: parentSigner,
+        overrides: { gasLimit: percentIncrease(gasLimit, BigNumber.from(5)) }
+      })
 
-    const sourceChainTransaction = await erc20Bridger.deposit({
-      ...depositRequest,
-      parentSigner: parentWallet,
-      childProvider: childProvider,
-      overrides: { gasLimit: percentIncrease(gasLimit, BigNumber.from(5)) },
-    });
+    // const depositRequest = await erc20Bridger.getDepositRequest({
+    //   parentProvider: parentProvider,
+    //   childProvider: childProvider,
+    //   from: parentWallet,
+    //   erc20ParentAddress: parentTokenAddr,
+    //   destinationAddress: beneficiary,
+    //   amount: tokenDepositAmount,
+    // //   retryableGasOverrides: {
+    //     // the gas limit may vary by about 20k due to SSTORE (zero vs nonzero)
+    //     // the 30% gas limit increase should cover the difference
+    //     // gasLimit: { percentIncrease: BigNumber.from(30) },
+    // //   },
+    // });
+
+    // const gasLimit = await parentProvider.estimateGas(depositRequest.txRequest);
+
+    // const sourceChainTransaction = await erc20Bridger.deposit({
+    //   ...depositRequest,
+    //   parentSigner: parentSigner,
+    //   childProvider: childProvider,
+    //   overrides: { gasLimit: percentIncrease(gasLimit, BigNumber.from(5)) },
+    // });
 
     /**
      * Now we wait for parent and child side of transactions to be confirmed
@@ -165,22 +126,22 @@ export async function deposit(
     const childResult = await depositRec.waitForChildTransactionReceipt(
       childProvider
     );
-    txHashDeposit = childResult.message.retryableCreationId;
+    // txHashDeposit = childResult.message.retryableCreationId;
 
     /**
      * The `complete` boolean tells us if the parent to child message was successful
      */
 
-    let status = ParentToChildMessageStatus[childResult.status];
+    // let status = ParentToChildMessageStatus[childResult.status];
     if (childResult.complete === true) {
       return [
         true,
         JSON.stringify(
           {
             txHash: txHashDeposit,
-            parentWallet: await parentWallet.getAddress(),
+            parentWallet: parentWallet,
             childWallet: beneficiary,
-            amount: ethers.utils.formatUnits(tokenDepositAmount, tokenDecimals),
+            amount: tokenDepositAmount,
           },
           null,
           2
@@ -188,7 +149,7 @@ export async function deposit(
       ];
     } else {
       throw new Error(
-        `Failed for child network retryable with status "${status}"`
+        // `Failed for child network retryable with status "${status}"`
       );
     }
   } catch (e: any) {
